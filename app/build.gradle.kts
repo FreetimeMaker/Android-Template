@@ -36,6 +36,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.freetime.core)
+    implementation(libs.freetime.design)
+    implementation(libs.freetime.browser)
+    implementation(libs.freetime.donations)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

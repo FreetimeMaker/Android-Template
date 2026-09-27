@@ -11,27 +11,36 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.freetime.browser.FreetimeBrowser
 import com.freetime.core.FreetimeCore
 import com.freetime.design.AppTheme
-import com.freetime.design.LiquidGlassRoot
+import com.freetime.design.FloatingBottomNavigationBar
+import com.freetime.design.FloatingBottomNavigationGlassRoot
+import com.freetime.design.FloatingBottomNavigationItem
 import com.freetime.design.ThemeMode
-import com.freetime.design.liquidGlass
-import com.freetime.design.liquidGlassCapsule
 import com.freetime.donations.DonationTarget
 import com.freetime.donations.FreetimeDonationScreen
 import com.freetime.warn.FreetimeWarn
@@ -48,6 +57,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun TemplateApp() {
     val context = LocalContext.current
+    var selectedTab by remember { mutableIntStateOf(0) }
     val warning = rememberFreetimeWarnState(
         context = context,
         appName = "Template",
@@ -56,9 +66,11 @@ private fun TemplateApp() {
 
     AppTheme(
         themeMode = ThemeMode.AUTO_TIME,
-        liquidGlassEnabled = true,
+        lightHour = 7,
+        darkHour = 19,
+        floatingBottomNavigationGlassEnabled = true,
     ) {
-        LiquidGlassRoot(
+        FloatingBottomNavigationGlassRoot(
             modifier = Modifier.fillMaxSize(),
             source = {
                 Box(
@@ -79,98 +91,137 @@ private fun TemplateApp() {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 containerColor = Color.Transparent,
+                bottomBar = {
+                    val items = listOf(
+                        FloatingBottomNavigationItem(
+                            label = "Home",
+                            icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        ),
+                        FloatingBottomNavigationItem(
+                            label = "Settings",
+                            icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        ),
+                        FloatingBottomNavigationItem(
+                            label = "Donate",
+                            icon = { Icon(Icons.Default.Add, contentDescription = "Donate") },
+                        ),
+                    )
+
+                    FloatingBottomNavigationBar(
+                        items = items,
+                        selectedItemIndex = when (selectedTab) {
+                            0 -> 0
+                            1 -> 1
+                            3 -> 2
+                            else -> 0
+                        },
+                        onItemSelected = { index ->
+                            selectedTab = when (index) {
+                                0 -> 0
+                                1 -> 1
+                                else -> 3
+                            }
+                        },
+                        searchItem = FloatingBottomNavigationItem(
+                            label = "Browser",
+                            icon = { Icon(Icons.Default.Search, contentDescription = "Browser") },
+                        ),
+                        searchSelected = selectedTab == 2,
+                        onSearchSelected = { selectedTab = 2 },
+                    )
+                },
             ) { innerPadding ->
-                TemplateContent(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                )
+                when (selectedTab) {
+                    0 -> HomeScreen(Modifier.padding(innerPadding))
+                    1 -> SettingsScreen(Modifier.padding(innerPadding))
+                    2 -> BrowserScreen(Modifier.padding(innerPadding))
+                    else -> DonationScreen(Modifier.padding(innerPadding))
+                }
             }
         }
 
         FreetimeWarn(
             state = warning,
             onLearnMore = {
-                FreetimeBrowser.openExternal(context, "https://github.com/FreetimeMaker/Freetime-Core")
+                FreetimeBrowser.openExternal(
+                    context,
+                    "https://github.com/FreetimeMaker/Freetime-Core",
+                )
             },
         )
     }
 }
 
 @Composable
-private fun TemplateContent(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-
+private fun HomeScreen(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Text("Freetime Core Template", style = MaterialTheme.typography.headlineMedium)
         Text(
-            text = "Freetime Core Template",
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Text(
-            text = "Freetime Core ${FreetimeCore.SDK_VERSION}",
+            text = "SDK: ${FreetimeCore.SDK_VERSION}",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .liquidGlass(
-                    shape = MaterialTheme.shapes.largeIncreased,
-                    interactive = false,
-                ),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("Core + Design", style = MaterialTheme.typography.titleMedium)
-                Text("Material 3 Expressive, Material You and Liquid Glass are ready to use.")
+                Text("Material 3 Expressive", style = MaterialTheme.typography.titleMedium)
+                Text("Normal content uses Material 3 Expressive and Material You.")
+                Text("Liquid Glass is reserved for the floating bottom navigation.")
             }
         }
+    }
+}
 
+@Composable
+private fun SettingsScreen(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text("Settings", style = MaterialTheme.typography.headlineMedium)
+        Text("AUTO_TIME: light from 07:00, dark from 19:00.")
+        Text("Floating bottom navigation Liquid Glass is enabled.")
+    }
+}
+
+@Composable
+private fun BrowserScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text("Browser", style = MaterialTheme.typography.headlineMedium)
         Button(
-            onClick = {
-                FreetimeBrowser.openExternal(context, "https://free-time.me")
-            },
-            modifier = Modifier.liquidGlassCapsule(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            onClick = { FreetimeBrowser.openExternal(context, "https://free-time.me") },
         ) {
             Text("Open website")
         }
-
-        DonationExample()
     }
 }
 
 @Composable
-private fun DonationExample() {
+private fun DonationScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val targets = listOf(
-        DonationTarget.Link(
-            label = "OpenCollective",
-            url = "https://opencollective.com/freetimemaker",
-        ),
-    )
-
     FreetimeDonationScreen(
-        targets = targets,
-        onLinkClick = { target ->
-            FreetimeBrowser.openExternal(context, target.url)
-        },
+        targets = listOf(
+            DonationTarget.Link(
+                label = "OpenCollective",
+                url = "https://opencollective.com/freetimemaker",
+            ),
+        ),
+        onLinkClick = { FreetimeBrowser.openExternal(context, it.url) },
+        modifier = modifier.fillMaxSize(),
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TemplatePreview() {
-    AppTheme {
-        Text(
-            text = "Freetime Core 2.0.0",
-            modifier = Modifier.padding(24.dp),
-        )
-    }
 }
